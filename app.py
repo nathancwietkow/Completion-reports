@@ -1,277 +1,139 @@
 #!/usr/bin/env python3
-"""
-Flask app for Completion Report Generator with Full Integration
-"""
-
 from flask import Flask, render_template, request, jsonify, send_file
 from docx import Document
-from docx.shared import Inches, Pt
 import os
-from pathlib import Path
-import json
-from datetime import datetime
 
 app = Flask(__name__)
-app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024
 
-# ===== COATINGS DATA =====
 COATINGS = {
-    "resichem_507": {
-        "name": "RESICHEM 507 DWPU",
-        "benefits": [
-            "WRAS Approved",
-            "Complete Solvent Free Technology",
-            "Extremely Fast Curing Times, even at low temperatures",
-            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
-            "Superb adhesion to steel, concrete, GRP and many other substrates",
-            "High levels of impact and chemical resistance",
-            "Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion",
-            "Long life performance with minimal maintenance",
-            "Easy clean, ceramic tile-like finish",
-            "Application by brush / roller or plural component spray equipment",
-            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
-        ]
-    },
-    "maxline_100": {
-        "name": "MAXLINE 100 DWPU",
-        "benefits": [
-            "WRAS Approved",
-            "Complete Solvent Free Technology",
-            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
-            "Superb adhesion to steel, concrete, GRP and many other substrates",
-            "High levels of impact and chemical resistance",
-            "Long life performance with minimal maintenance",
-            "Easy clean, ceramic tile-like finish",
-            "Application by brush / roller or plural component spray equipment",
-            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
-        ]
-    },
-    "dwpu": {
-        "name": "DRINKING WATER POLYURETHANE (DWPU)",
-        "benefits": [
-            "WRAS Approved",
-            "Complete Solvent Free Technology",
-            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
-            "Superb adhesion to steel, concrete, GRP and many other substrates",
-            "High levels of impact and chemical resistance",
-            "Long life performance with minimal maintenance",
-            "Easy clean, ceramic tile-like finish",
-            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
-        ]
-    }
+    "resichem_507": {"name": "RESICHEM 507 DWPU", "benefits": ["WRAS Approved", "Complete Solvent Free Technology", "Extremely Fast Curing Times", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Fast refill - 6hrs minimum", "Long life performance", "Easy clean finish", "Brush/roller or spray", "Excellent track record"]},
+    "maxline_100": {"name": "MAXLINE 100 DWPU", "benefits": ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Brush/roller or spray", "Excellent track record"]},
+    "dwpu": {"name": "DRINKING WATER POLYURETHANE (DWPU)", "benefits": ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Excellent track record"]}
 }
 
-# ===== ADDITIONAL PRODUCTS DATA =====
-ADDITIONAL_PRODUCTS = {
-    "jotamastic_90": {
-        "name": "JOTAMASTIC 90",
-        "reason": "to use in conjunction with JOTUN HARDTOP XP"
-    },
-    "jotun_hardtop": {
-        "name": "JOTUN HARDTOP XP",
-        "reason": "which is a long-lasting topcoat that provides UV and weather resistant protection"
-    }
-}
+ADDITIONAL_PRODUCTS = {"jotamastic_90": {"name": "JOTAMASTIC 90", "reason": "to use with JOTUN HARDTOP XP"}, "jotun_hardtop": {"name": "JOTUN HARDTOP XP", "reason": "which is a long-lasting topcoat that provides UV and weather resistant protection"}}
 
-# ===== PROCESS STEPS DATA =====
-PROCESS_STEPS = {
-    "surface_prep": "The surfaces were manually prepared to provide a surface profile of 0.75mm to accept the new coating.",
-    "repairs": "Localised repairs were completed to restore structural strength and provide increased protection.",
-    "sealing": "Sealing was applied to provide structural strength and improve substrate adhesion of the coating.",
-    "basecoat": "A basecoat of [coating] was then applied to all internal surfaces at a nominal thickness of 300-500 micron.",
-    "topcoat": "A topcoat of [coating] was then applied to all internal surfaces at a nominal thickness of 300-500 micron.",
-    "refill": "The system was disinfected, and refilled, ready to go back online.",
-    "other_tanks": "The same methodology was applied to [asset_name].",
-    "remedials": "The following remedial works were also completed during this project."
-}
+REMEDIAL_WORKS = {"pipework_reroute": "Pipework rerouting", "vent_reroute": "Vent back rerouting", "pipework_disinfect": "Pipework disinfections", "outlet_flush": "Outlet flushing", "insulation_wrap": "Insulation wrapping", "lid_replace": "Lid replacement", "lid_vents": "Lid vents/overflow screens", "support_replace": "Support replacements", "fibreglass_repair": "Fibreglass repair", "access_hatches": "Installing Access Hatches"}
 
-# ===== TANK TYPES & SUBTYPES =====
-TANK_TYPES = {
-    "gsm": "Galvanised Steel Tank (GSM)",
-    "grp": "Glass Reinforced Plastic Tank (GRP)",
-    "concrete": "Concrete Tank",
-    "plastic": "Plastic Tank",
-    "asbestos": "Asbestos Tank",
-    "other": "Other"
-}
-
-TANK_SUBTYPES = {
-    "one_piece": "One Piece",
-    "sectional_tif": "Sectional – Totally Internally Flanged",
-    "sectional_pif": "Sectional – Partially Internally Flanged",
-    "sectional_ef": "Sectional – Externally Flanged",
-    "sectional": "Sectional",
-    "other": "Other"
-}
-
-# ===== MAJOR PROJECTS =====
-MAJOR_PROJECTS = {
-    "full_reline": "Full Tank Reline",
-    "bolt_reline": "Bolt restoration and lining",
-    "steel_reline": "Steel restorations and lining",
-    "clean_disinfect": "Tank clean and disinfections",
-    "tank_install": "Tank installation",
-    "tank_remove": "Tank removal",
-    "crack_repair": "Repairing cracks/patch repairs on fibreglass tanks",
-    "dividing_wall": "Dividing wall repairs on duplex fibreglass tanks",
-    "tanking_floor": "Tanking plant room floors",
-}
-
-# ===== REMEDIAL WORKS =====
-REMEDIAL_WORKS = {
-    "pipework_reroute": "Pipework rerouting",
-    "vent_reroute": "Vent back rerouting",
-    "pipework_disinfect": "Pipework disinfections",
-    "outlet_flush": "Outlet flushing",
-    "insulation_wrap": "Insulation wrapping pipework/tank",
-    "lid_replace": "Lid replacement",
-    "lid_vents": "Installation of lid vents and/or overflow screens",
-    "support_replace": "Hollow support replacements",
-    "fibreglass_repair": "Fibreglass repair and strengthening",
-    "access_hatches": "Installing Access Hatches",
-}
-
-def generate_project_brief(company_name, major_project, tank_quantity, tank_type, tank_location, coating_id, additional_products_list):
-    """Generate dynamic project brief based on selections"""
-
+def generate_project_brief(company, project, qty, asset_type, location, coating_id, products, issues):
     coating = COATINGS.get(coating_id, {})
-    coating_name = coating.get('name', 'coating')
-    coating_benefits = coating.get('benefits', [])
+    asset_word = "asset" if qty == "1" else "assets"
 
-    benefits_text = "\n".join([f"• {benefit}" for benefit in coating_benefits])
+    # Build brief based on whether coating was selected
+    if coating_id:
+        benefits = "\n".join([f"• {b}" for b in coating.get('benefits', [])])
+        brief = f"{company} were asked to provide a solution to {project} {qty} {asset_type} {asset_word} located in {location}. We proposed that each asset be given long term protection by the application of a solvent free polyurethane coating.\n\n"
+        brief += f"The product employed was {coating.get('name', 'coating')}, which offers numerous economic, technical and environmental features and benefits:\n\n{benefits}\n\n"
+    else:
+        brief = f"{company} were asked to provide a solution to {project} {qty} {asset_type} {asset_word} located in {location}.\n\n"
 
-    project_brief = f"{company_name} were asked to provide a solution to {major_project} {tank_quantity} {tank_type} located in {tank_location}. We proposed that each tank be given long term protection by the application of a solvent free polyurethane coating.\n\n"
+    # Add additional products if selected
+    for pid in products:
+        p = ADDITIONAL_PRODUCTS.get(pid, {})
+        if p:
+            brief += f"Additionally, {p.get('name', '')} was applied {p.get('reason', '')}.\n\n"
 
-    project_brief += f"The product employed was {coating_name}, which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n{benefits_text}\n\n"
-
-    if additional_products_list:
-        for product_id in additional_products_list:
-            product = ADDITIONAL_PRODUCTS.get(product_id, {})
-            if product:
-                product_name = product.get('name', '')
-                product_reason = product.get('reason', '')
-                project_brief += f"Additionally, {product_name} was applied {product_reason}.\n\n"
-
-    project_brief += "The following pages show the methodology employed:"
-
-    return project_brief
+    brief += "The following pages show the methodology employed:"
+    return brief
 
 @app.route('/')
 def index():
-    return render_template('index.html',
-                         tank_types=TANK_TYPES,
-                         tank_subtypes=TANK_SUBTYPES,
-                         coatings=COATINGS,
-                         additional_products=ADDITIONAL_PRODUCTS,
-                         major_projects=MAJOR_PROJECTS,
-                         remedial_works=REMEDIAL_WORKS)
+    return render_template('index.html')
 
 @app.route('/api/generate-report', methods=['POST'])
 def generate_report():
-    """Generate completion report from form data"""
     try:
         data = request.form
         files = request.files
 
-        job_details = {
+        site_name = data.get('siteName', '')
+        asset_type = data.get('assetType', '')
+        asset_subcategory = data.get('assetSubcategory', '')
+        asset_location = data.get('assetLocation', '')
+        asset_quantity = data.get('assetQuantity', '1')
+
+        job = {
             'project_number': data.get('projectNumber', ''),
-            'customer_name': data.get('customerName', ''),
-            'address_line1': data.get('addressLine1', ''),
-            'address_line2': data.get('addressLine2', ''),
-            'address_line3': data.get('addressLine3', ''),
-            'postcode': data.get('postcode', ''),
-            'completion_date': data.get('completionDate', ''),
-            'tank_quantity': data.get('tankQuantity', '1'),
-            'tank_location': data.get('tankLocation', ''),
+            'site_name': site_name,
+            'asset_type': asset_type,
+            'asset_subcategory': asset_subcategory,
+            'asset_location': asset_location,
+            'asset_quantity': asset_quantity,
+            'date': data.get('completionDate', ''),
         }
 
-        major_project = data.get('majorProject', '')
-        tank_type = data.get('tankType', '')
-        work_completed_by = data.get('workCompletedBy', 'key_environmental')
-        subcontractor_name = data.get('subcontractorName', '')
+        work_by = data.get('workCompletedBy', 'key_environmental')
+        subcon = data.get('subcontractorName', '')
+        company = subcon if work_by == 'subcontracted' and subcon else "Key Environmental Services Ltd"
+        footer = f"For and on behalf of {company}"
+
+        # Get asset issues
+        issues = data.getlist('assetIssues[]')
+        issues_text = ", ".join(issues) if issues else "General maintenance"
+
+        # Get coating (now optional)
         coating_id = data.get('coating', '')
-        additional_products = data.getlist('additionalProducts[]')
-        remedial_works = data.getlist('remedialWorks[]')
-        include_guarantee = data.get('includeGuarantee') == 'true'
-        include_disinfection = data.get('includeDisinfection') == 'true'
 
-        if work_completed_by == 'subcontracted' and subcontractor_name:
-            company_name = subcontractor_name
-            footer_line = f"For and on behalf of {subcontractor_name}"
-        else:
-            company_name = "Key Environmental Services Ltd"
-            footer_line = "For and on behalf of Key Environmental Services Ltd"
-
-        project_brief_text = generate_project_brief(
-            company_name,
-            MAJOR_PROJECTS.get(major_project, major_project),
-            job_details['tank_quantity'],
-            TANK_TYPES.get(tank_type, tank_type),
-            job_details['tank_location'],
+        brief = generate_project_brief(
+            company,
+            data.get('majorProject', ''),
+            asset_quantity,
+            asset_type,
+            asset_location,
             coating_id,
-            additional_products
+            data.getlist('additionalProducts[]'),
+            issues
         )
 
-        remedial_names = [REMEDIAL_WORKS.get(w, w) for w in remedial_works]
+        remedial = [REMEDIAL_WORKS.get(w, w) for w in data.getlist('remedialWorks[]')]
 
-        template_path = 'completion_report_template.docx'
-        if not os.path.exists(template_path):
-            return jsonify({'error': 'Template file not found'}), 400
+        if not os.path.exists('completion_report_template.docx'):
+            return jsonify({'error': 'Template not found'}), 400
 
-        doc = Document(template_path)
+        doc = Document('completion_report_template.docx')
 
-        replacements = {
-            '[CUSTOMER_NAME]': job_details['customer_name'],
-            '[ADDRESS_LINE_1]': job_details['address_line1'],
-            '[ADDRESS_LINE_2]': job_details['address_line2'],
-            '[ADDRESS_LINE_3]': job_details['address_line3'],
-            '[POSTCODE]': job_details['postcode'],
-            '[PROJECT_NUMBER]': job_details['project_number'],
-            '[COMPLETION_DATE]': job_details['completion_date'],
-            '[COMPANY_NAME]': company_name,
-            '[PROJECT_BRIEF_DESCRIPTION]': project_brief_text,
+        replace = {
+            '[CUSTOMER_NAME]': site_name,
+            '[PROJECT_NUMBER]': job['project_number'],
+            '[COMPLETION_DATE]': job['date'],
+            '[COMPANY_NAME]': company,
+            '[PROJECT_BRIEF_DESCRIPTION]': brief,
             '[SIGNATURE_NAME]': 'CON O\'SHEA',
             '[SIGNATURE_TITLE]': 'DIRECTOR',
-            '[FOOTER_LINE]': footer_line,
+            '[FOOTER_LINE]': footer,
+            '[ASSET_ISSUES]': issues_text,
         }
 
-        for paragraph in doc.paragraphs:
-            for run in paragraph.runs:
-                for key, value in replacements.items():
-                    if key in run.text:
-                        run.text = run.text.replace(key, value)
+        for para in doc.paragraphs:
+            for run in para.runs:
+                for k, v in replace.items():
+                    if k in run.text:
+                        run.text = run.text.replace(k, v)
 
-        if remedial_names:
-            remedial_text = "Remedial works completed: " + ", ".join(remedial_names)
-            for paragraph in doc.paragraphs:
-                if '[REMEDIAL_WORKS_DESCRIPTION]' in paragraph.text:
-                    for run in paragraph.runs:
-                        run.text = run.text.replace('[REMEDIAL_WORKS_DESCRIPTION]', remedial_text)
+        if remedial:
+            text = "Remedial works completed: " + ", ".join(remedial)
+            for para in doc.paragraphs:
+                if '[REMEDIAL_WORKS_DESCRIPTION]' in para.text:
+                    for run in para.runs:
+                        run.text = run.text.replace('[REMEDIAL_WORKS_DESCRIPTION]', text)
 
-        output_filename = f"{job_details['project_number']} - {job_details['customer_name']} - Completion Report.docx"
-        output_path = os.path.join('reports', output_filename)
-
+        filename = f"{job['project_number']} - {site_name} - Completion Report.docx"
+        path = os.path.join('reports', filename)
         os.makedirs('reports', exist_ok=True)
-        doc.save(output_path)
+        doc.save(path)
 
-        return jsonify({
-            'success': True,
-            'filename': output_filename,
-            'filepath': output_path
-        })
-
+        return jsonify({'success': True, 'filename': filename, 'filepath': path})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/download/<path:filepath>')
-def download_report(filepath):
-    """Download generated report"""
+def download(filepath):
     try:
         return send_file(filepath, as_attachment=True)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except:
+        return jsonify({'error': 'Download failed'}), 500
 
 if __name__ == '__main__':
-    import os
     port = int(os.environ.get('PORT', 5000))
     app.run(debug=False, host='0.0.0.0', port=port)

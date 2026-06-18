@@ -5,55 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Completion Report Generator</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
         }
-
         .container {
             max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 12px;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            overflow: hidden;
         }
-
         .header {
             background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
             color: white;
             padding: 40px;
             text-align: center;
         }
-
-        .header h1 {
-            font-size: 32px;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            opacity: 0.9;
-            font-size: 16px;
-        }
-
-        .content {
-            padding: 40px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .form-section {
-            margin-bottom: 40px;
-        }
-
+        .header h1 { font-size: 32px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        .content { padding: 40px; max-height: 80vh; overflow-y: auto; }
+        .form-section { margin-bottom: 40px; }
         .section-title {
             font-size: 20px;
             font-weight: 600;
@@ -62,34 +37,11 @@
             padding-bottom: 10px;
             border-bottom: 2px solid #667eea;
         }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .form-grid.full {
-            grid-template-columns: 1fr;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            font-weight: 500;
-            color: #2c3e50;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        input[type="date"],
-        select {
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .form-grid.full { grid-template-columns: 1fr; }
+        .form-group { display: flex; flex-direction: column; }
+        label { font-weight: 500; color: #2c3e50; margin-bottom: 8px; font-size: 14px; }
+        input[type="text"], input[type="number"], input[type="date"], input[type="file"], select, textarea {
             padding: 12px;
             border: 1px solid #ddd;
             border-radius: 6px;
@@ -97,20 +49,12 @@
             font-family: inherit;
             transition: all 0.3s ease;
         }
-
-        input:focus,
-        select:focus {
+        input:focus, select:focus, textarea:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
-
-        .checkbox-group {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-        }
-
+        .checkbox-group { display: grid; grid-template-columns: 1fr; gap: 12px; }
         .checkbox-item {
             display: flex;
             align-items: center;
@@ -121,50 +65,12 @@
             cursor: pointer;
             transition: all 0.2s ease;
         }
-
-        .checkbox-item:hover {
-            background-color: #f8f9ff;
-            border-color: #667eea;
-        }
-
-        .checkbox-item input[type="checkbox"] {
-            cursor: pointer;
-            width: 18px;
-            height: 18px;
-            accent-color: #667eea;
-        }
-
-        .checkbox-item label {
-            margin: 0;
-            cursor: pointer;
-            flex: 1;
-        }
-
-        .benefits-preview {
-            background: #f8f9ff;
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 10px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .benefits-preview ul {
-            list-style-position: inside;
-            margin: 0;
-        }
-
-        .benefits-preview li {
-            margin: 5px 0;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            margin-top: 40px;
-        }
-
+        .checkbox-item:hover { background-color: #f8f9ff; border-color: #667eea; }
+        .checkbox-item input[type="checkbox"] { cursor: pointer; width: 18px; height: 18px; accent-color: #667eea; }
+        .checkbox-item label { margin: 0; cursor: pointer; flex: 1; }
+        .photo-upload-group { display: none; background: #f8f9ff; padding: 15px; border-radius: 6px; margin-top: 10px; }
+        .photo-upload-group.show { display: block; }
+        .button-group { display: flex; gap: 15px; justify-content: center; margin-top: 40px; }
         button {
             padding: 12px 30px;
             border: none;
@@ -174,96 +80,24 @@
             cursor: pointer;
             transition: all 0.3s ease;
         }
-
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: #f0f0f0;
-            color: #333;
-        }
-
-        .btn-secondary:hover {
-            background: #e0e0e0;
-        }
-
-        .success-message {
-            display: none;
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-
-        .error-message {
-            display: none;
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .two-column {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4); }
+        .btn-secondary { background: #f0f0f0; color: #333; }
+        .btn-secondary:hover { background: #e0e0e0; }
+        .success-message { display: none; background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .error-message { display: none; background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .loading { display: none; text-align: center; padding: 20px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .two-column { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
         @media (max-width: 768px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .two-column {
-                grid-template-columns: 1fr;
-            }
-
-            .button-group {
-                flex-direction: column;
-            }
-
-            button {
-                width: 100%;
-            }
+            .form-grid { grid-template-columns: 1fr; }
+            .two-column { grid-template-columns: 1fr; }
+            .button-group { flex-direction: column; }
+            button { width: 100%; }
         }
     </style>
 </head>
@@ -276,7 +110,7 @@
 
         <div class="content">
             <div class="success-message" id="successMessage">
-                ✓ Report generated successfully! <a href="#" id="downloadLink" class="download-link">Download here</a>
+                ✓ Report generated successfully! <a href="#" id="downloadLink">Download here</a>
             </div>
             <div class="error-message" id="errorMessage"></div>
             <div class="loading" id="loading">
@@ -284,8 +118,8 @@
                 <p>Generating your report...</p>
             </div>
 
-            <form id="reportForm">
-                <!-- Job Details Section -->
+            <form id="reportForm" enctype="multipart/form-data">
+                <!-- Job Details -->
                 <div class="form-section">
                     <div class="section-title">Job Details</div>
                     <div class="form-grid">
@@ -326,7 +160,7 @@
                     </div>
                 </div>
 
-                <!-- Work Details Section -->
+                <!-- Work Details -->
                 <div class="form-section">
                     <div class="section-title">Work Details</div>
                     <div class="form-grid">
@@ -345,20 +179,20 @@
                     </div>
                 </div>
 
-                <!-- Tank Details Section -->
+                <!-- Tank Details -->
                 <div class="form-section">
                     <div class="section-title">Tank Details</div>
                     <div class="form-grid">
                         <div class="form-group">
                             <label>Tank Type *</label>
-                            <select name="tankType" required id="tankType">
+                            <select name="tankType" required>
                                 <option value="">-- Choose --</option>
-                                <option value="gsm">Galvanised Steel Tank (GSM)</option>
-                                <option value="grp">Glass Reinforced Plastic Tank (GRP)</option>
-                                <option value="concrete">Concrete Tank</option>
-                                <option value="plastic">Plastic Tank</option>
-                                <option value="asbestos">Asbestos Tank</option>
-                                <option value="other">Other</option>
+                                <option value="Galvanised Steel Tank (GSM)">Galvanised Steel Tank (GSM)</option>
+                                <option value="Glass Reinforced Plastic Tank (GRP)">Glass Reinforced Plastic Tank (GRP)</option>
+                                <option value="Concrete Tank">Concrete Tank</option>
+                                <option value="Plastic Tank">Plastic Tank</option>
+                                <option value="Asbestos Tank">Asbestos Tank</option>
+                                <option value="Other">Other</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -369,32 +203,32 @@
                     <div class="form-grid full">
                         <div class="form-group">
                             <label>Tank Location *</label>
-                            <input type="text" name="tankLocation" placeholder="e.g., London, Manchester" required>
+                            <input type="text" name="tankLocation" placeholder="e.g., London" required>
                         </div>
                     </div>
                 </div>
 
-                <!-- Main Project Type Section -->
+                <!-- Project Type -->
                 <div class="form-section">
                     <div class="section-title">Project Type</div>
                     <div class="form-group full">
                         <label>Main Project Type *</label>
                         <select name="majorProject" required id="majorProject">
                             <option value="">-- Choose --</option>
-                            <option value="full_reline">Full Tank Reline</option>
-                            <option value="bolt_reline">Bolt restoration and lining</option>
-                            <option value="steel_reline">Steel restorations and lining</option>
-                            <option value="clean_disinfect">Tank clean and disinfections</option>
-                            <option value="tank_install">Tank installation</option>
-                            <option value="tank_remove">Tank removal</option>
-                            <option value="crack_repair">Repairing cracks/patch repairs on fibreglass tanks</option>
-                            <option value="dividing_wall">Dividing wall repairs on duplex fibreglass tanks</option>
-                            <option value="tanking_floor">Tanking plant room floors</option>
+                            <option value="Full Tank Reline">Full Tank Reline</option>
+                            <option value="Bolt restoration and lining">Bolt restoration and lining</option>
+                            <option value="Steel restorations and lining">Steel restorations and lining</option>
+                            <option value="Tank clean and disinfections">Tank clean and disinfections</option>
+                            <option value="Tank installation">Tank installation</option>
+                            <option value="Tank removal">Tank removal</option>
+                            <option value="Repairing cracks/patch repairs on fibreglass tanks">Repairing cracks/patch repairs on fibreglass tanks</option>
+                            <option value="Dividing wall repairs on duplex fibreglass tanks">Dividing wall repairs on duplex fibreglass tanks</option>
+                            <option value="Tanking plant room floors">Tanking plant room floors</option>
                         </select>
                     </div>
                 </div>
 
-                <!-- Coating Selection Section -->
+                <!-- Coating -->
                 <div class="form-section">
                     <div class="section-title">Coating Selection</div>
                     <div class="form-group full">
@@ -406,25 +240,102 @@
                             <option value="dwpu">DRINKING WATER POLYURETHANE (DWPU)</option>
                         </select>
                     </div>
-                    <div id="coatingBenefits" class="benefits-preview" style="display:none;"></div>
                 </div>
 
-                <!-- Additional Products Section -->
+                <!-- Additional Products -->
                 <div class="form-section">
                     <div class="section-title">Additional Products (Optional)</div>
                     <div class="checkbox-group">
                         <div class="checkbox-item">
                             <input type="checkbox" name="additionalProducts[]" value="jotamastic_90" id="prod1">
-                            <label for="prod1">JOTAMASTIC 90 (primer for use with JOTUN HARDTOP XP)</label>
+                            <label for="prod1">JOTAMASTIC 90</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="additionalProducts[]" value="jotun_hardtop" id="prod2">
-                            <label for="prod2">JOTUN HARDTOP XP (UV/weather resistant topcoat)</label>
+                            <label for="prod2">JOTUN HARDTOP XP</label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Remedial Works Section -->
+                <!-- Process Steps -->
+                <div class="form-section">
+                    <div class="section-title">Process Steps (Select which apply)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="before" id="step_before" checked>
+                            <label for="step_before">BEFORE</label>
+                        </div>
+                        <div class="photo-upload-group show" id="photos_before">
+                            <label>Upload photos for BEFORE section:</label>
+                            <input type="file" name="photo_before" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="surface_prep" id="step_surface_prep">
+                            <label for="step_surface_prep">SURFACE PREPARATION</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_surface_prep">
+                            <label>Upload photos for SURFACE PREPARATION section:</label>
+                            <input type="file" name="photo_surface_prep" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="repairs" id="step_repairs">
+                            <label for="step_repairs">REPAIRS</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_repairs">
+                            <label>Upload photos for REPAIRS section:</label>
+                            <input type="file" name="photo_repairs" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="sealing" id="step_sealing">
+                            <label for="step_sealing">SEALING</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_sealing">
+                            <label>Upload photos for SEALING section:</label>
+                            <input type="file" name="photo_sealing" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="basecoat" id="step_basecoat">
+                            <label for="step_basecoat">BASECOAT</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_basecoat">
+                            <label>Upload photos for BASECOAT section:</label>
+                            <input type="file" name="photo_basecoat" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="topcoat" id="step_topcoat">
+                            <label for="step_topcoat">TOPCOAT</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_topcoat">
+                            <label>Upload photos for TOPCOAT section:</label>
+                            <input type="file" name="photo_topcoat" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="refill" id="step_refill">
+                            <label for="step_refill">REFILL & DISINFECTION</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_refill">
+                            <label>Upload photos for REFILL & DISINFECTION section:</label>
+                            <input type="file" name="photo_refill" accept="image/*" multiple>
+                        </div>
+
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="processSteps[]" value="other_tanks" id="step_other_tanks">
+                            <label for="step_other_tanks">OTHER TANKS</label>
+                        </div>
+                        <div class="photo-upload-group" id="photos_other_tanks">
+                            <label>Upload photos for OTHER TANKS section:</label>
+                            <input type="file" name="photo_other_tanks" accept="image/*" multiple>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Remedial Works -->
                 <div class="form-section">
                     <div class="section-title">Remedial Works (Select if applicable)</div>
                     <div class="checkbox-group two-column">
@@ -469,9 +380,13 @@
                             <label for="rw10">Installing Access Hatches</label>
                         </div>
                     </div>
+                    <div class="photo-upload-group show" id="photos_remedials" style="margin-top: 15px;">
+                        <label>Upload photos for REMEDIAL WORKS section:</label>
+                        <input type="file" name="photo_remedials" accept="image/*" multiple>
+                    </div>
                 </div>
 
-                <!-- Certificates Section -->
+                <!-- Certificates -->
                 <div class="form-section">
                     <div class="section-title">Certificates</div>
                     <div class="form-grid">
@@ -492,7 +407,6 @@
                     </div>
                 </div>
 
-                <!-- Submit Button -->
                 <div class="button-group">
                     <button type="reset" class="btn-secondary">Clear Form</button>
                     <button type="submit" class="btn-primary">Generate Report</button>
@@ -502,38 +416,21 @@
     </div>
 
     <script>
-        // Coating data
-        const coatingData = {
-            resichem_507: {
-                name: "RESICHEM 507 DWPU",
-                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "Extremely Fast Curing Times", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Fast refill - 6hrs minimum", "Long life performance", "Easy clean finish", "Brush/roller or spray application", "Excellent track record"]
-            },
-            maxline_100: {
-                name: "MAXLINE 100 DWPU",
-                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Brush/roller or spray application", "Excellent track record"]
-            },
-            dwpu: {
-                name: "DRINKING WATER POLYURETHANE (DWPU)",
-                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Excellent track record"]
-            }
-        };
+        // Toggle photo uploads based on process step checkboxes
+        document.querySelectorAll('input[name="processSteps[]"]').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const photoGroup = document.getElementById(`photos_${this.value}`);
+                if (this.checked) {
+                    photoGroup.classList.add('show');
+                } else {
+                    photoGroup.classList.remove('show');
+                }
+            });
+        });
 
         // Show/hide subcontractor field
         document.getElementById('workCompletedBy').addEventListener('change', function(e) {
             document.getElementById('subcontractorDetails').style.display = e.target.value === 'subcontracted' ? 'flex' : 'none';
-        });
-
-        // Display coating benefits
-        document.getElementById('coatingSelect').addEventListener('change', function(e) {
-            const benefitsDiv = document.getElementById('coatingBenefits');
-            if (e.target.value && coatingData[e.target.value]) {
-                const coating = coatingData[e.target.value];
-                const benefitsList = coating.benefits.map(b => `<li>${b}</li>`).join('');
-                benefitsDiv.innerHTML = `<strong>${coating.name} Benefits:</strong><ul>${benefitsList}</ul>`;
-                benefitsDiv.style.display = 'block';
-            } else {
-                benefitsDiv.style.display = 'none';
-            }
         });
 
         // Form submission
@@ -570,7 +467,6 @@
                 errorMessage.textContent = '❌ Error: ' + error.message;
                 errorMessage.style.display = 'block';
                 loading.style.display = 'none';
-                errorMessage.scrollIntoView({ behavior: 'smooth' });
             }
         });
 
