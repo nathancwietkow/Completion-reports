@@ -273,9 +273,9 @@ def generate_report():
                 # Remove the placeholder paragraph
                 parent.remove(p_element)
 
-                # Insert a new paragraph for each issue
+                # Insert a new paragraph for each issue with bullet
                 for issue in issues:
-                    new_para = doc.add_paragraph(issue, style='List Bullet')
+                    new_para = doc.add_paragraph(f"• {issue}")
                     parent.insert(insert_index, new_para._element)
                     insert_index += 1
 
@@ -287,15 +287,18 @@ def generate_report():
             for paragraph in doc.paragraphs:
                 if placeholder in paragraph.text:
                     paragraph.clear()
-                    for photo_file in photo_files:
+                    for i, photo_file in enumerate(photo_files):
                         if photo_file and photo_file.filename:
                             temp_path = f"/tmp/{photo_file.filename}"
                             photo_file.save(temp_path)
                             run = paragraph.add_run()
                             try:
                                 run.add_picture(temp_path, width=Inches(5.5))
-                            except:
-                                run.text = "[Photo error]"
+                            except Exception as e:
+                                run.text = f"[Photo error]"
+                            # Add spacing between photos
+                            if i < len(photo_files) - 1:
+                                paragraph.add_run('\n\n')
                             if os.path.exists(temp_path):
                                 os.remove(temp_path)
                     return
@@ -307,15 +310,18 @@ def generate_report():
                         for paragraph in cell.paragraphs:
                             if placeholder in paragraph.text:
                                 paragraph.clear()
-                                for photo_file in photo_files:
+                                for i, photo_file in enumerate(photo_files):
                                     if photo_file and photo_file.filename:
                                         temp_path = f"/tmp/{photo_file.filename}"
                                         photo_file.save(temp_path)
                                         run = paragraph.add_run()
                                         try:
                                             run.add_picture(temp_path, width=Inches(5.5))
-                                        except:
-                                            run.text = "[Photo error]"
+                                        except Exception as e:
+                                            run.text = f"[Photo error]"
+                                        # Add spacing between photos
+                                        if i < len(photo_files) - 1:
+                                            paragraph.add_run('\n\n')
                                         if os.path.exists(temp_path):
                                             os.remove(temp_path)
                                 return
