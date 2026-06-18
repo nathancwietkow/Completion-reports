@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flask app for Completion Report Generator
+Flask app for Completion Report Generator with Full Integration
 """
 
 from flask import Flask, render_template, request, jsonify, send_file
@@ -14,74 +14,110 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024  # 100MB max
 
-# Services data
-MAJOR_PROJECTS = {
-    "full_reline": {
-        "name": "Full Tank Reline",
-        "brief": "Key Environmental Services were engaged to refurbish a cold-water storage tank which was suffering from corrosion and deterioration. We proposed that the internal surfaces be given long-term protection by the application of a solvent-free polyurethane coating system.",
-        "before": "The tank showed evidence of heavy corrosion, rust, and delamination of the internal surfaces. Water quality was compromised and the structural integrity was at risk.",
-        "prep": "The tank was drained and thoroughly dried. All corroded and affected internal surfaces were manually prepared to provide a surface profile suitable for coating application. Any holes or damage from corrosion were repaired using metal putty.",
-        "basecoat": "All internal surfaces were coated with MAXLINE 100 DWPU at a nominal thickness of 500 microns, providing excellent adhesion and chemical resistance.",
-        "topcoat": "The same coating system was applied for the top and final protective layer. The tank was then spray disinfected before being refilled and returned to service."
+# ===== COATINGS DATA =====
+COATINGS = {
+    "resichem_507": {
+        "name": "RESICHEM 507 DWPU",
+        "benefits": [
+            "WRAS Approved",
+            "Complete Solvent Free Technology",
+            "Extremely Fast Curing Times, even at low temperatures",
+            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
+            "Superb adhesion to steel, concrete, GRP and many other substrates",
+            "High levels of impact and chemical resistance",
+            "Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion",
+            "Long life performance with minimal maintenance",
+            "Easy clean, ceramic tile-like finish",
+            "Application by brush / roller or plural component spray equipment",
+            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
+        ]
     },
-    "bolt_reline": {
-        "name": "Bolt restoration and lining",
-        "brief": "Key Environmental Services were asked to refurbish corroded bolts and metal supports inside a cold-water storage tank. The bolts were suffering from corrosion in the oxygen-rich atmosphere above the waterline.",
-        "before": "The bolts and metal supports were starting to corrode, with rust and staining present internally. Scale deposits were also evident around inlet areas.",
-        "prep": "The tank was thoroughly dried and the affected bolts and support areas were manually prepared to provide the correct surface profile for coating.",
-        "coating": "All corroded areas were brush coated with MAXLINE 100 DWPU at a nominal thickness of 500 microns. Once fully cured, the tank was spray disinfected and refilled."
+    "maxline_100": {
+        "name": "MAXLINE 100 DWPU",
+        "benefits": [
+            "WRAS Approved",
+            "Complete Solvent Free Technology",
+            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
+            "Superb adhesion to steel, concrete, GRP and many other substrates",
+            "High levels of impact and chemical resistance",
+            "Long life performance with minimal maintenance",
+            "Easy clean, ceramic tile-like finish",
+            "Application by brush / roller or plural component spray equipment",
+            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
+        ]
     },
-    "steel_reline": {
-        "name": "Steel restorations and lining",
-        "brief": "Key Environmental Services were commissioned to restore and protect steel components within a storage tank system. The steel was showing signs of rust and corrosion requiring protective coating.",
-        "before": "Steel components showed significant rust formation and surface corrosion due to moisture and oxidation.",
-        "prep": "Steel surfaces were cleaned and prepared to provide proper adhesion for the protective coating system.",
-        "coating": "A MAXLINE 100 DWPU protective coating was applied to all steel components, providing long-term corrosion protection and chemical resistance."
-    },
-    "clean_disinfect": {
-        "name": "Tank clean and disinfections",
-        "brief": "Key Environmental Services were engaged to thoroughly clean and disinfect a storage tank to restore water quality and ensure microbiological safety.",
-        "before": "The tank required deep cleaning due to sediment accumulation, biofilm growth, and water quality concerns.",
-        "prep": "The tank was drained completely. Internal surfaces were scrubbed and cleaned to remove all debris, sediment, and biofilm deposits.",
-        "coating": "Following cleaning, the tank was thoroughly disinfected using approved disinfection methods. The tank was then flushed, refilled with treated water, and sampled to confirm water quality compliance."
-    },
-    "tank_install": {
-        "name": "Tank installation",
-        "brief": "Key Environmental Services provided professional installation of a new water storage tank, including all necessary pipework connections and commissioning.",
-        "before": "A new tank was required to replace or supplement existing storage capacity.",
-        "prep": "The installation location was prepared with proper supports, level base, and access for maintenance.",
-        "coating": "The new tank was installed, connected to supply and distribution pipework, tested for leaks, and commissioned into service with full system testing."
-    },
-    "tank_remove": {
-        "name": "Tank removal",
-        "brief": "Key Environmental Services safely removed and disposed of a redundant or damaged water storage tank in full compliance with environmental regulations.",
-        "before": "An existing tank was no longer required or was beyond economic repair.",
-        "prep": "The tank was isolated from the water system and fully drained.",
-        "coating": "The tank was carefully removed, with all connections properly capped off. Appropriate disposal of the tank was arranged in line with waste regulations."
-    },
-    "crack_repair": {
-        "name": "Repairing cracks/patch repairs on fibreglass tanks",
-        "brief": "Key Environmental Services were engaged to repair structural cracks and damage to a fibreglass storage tank to restore its structural integrity and watertightness.",
-        "before": "Visible cracks were present in the fibreglass structure, posing a risk of water leakage and structural failure.",
-        "prep": "The affected areas were cleaned and prepared, with crack edges properly dressed to ensure good adhesion for the repair material.",
-        "coating": "High-strength fibreglass repair resin was applied to all crack areas and patched sections. Once cured, repairs were sanded smooth and sealed with protective coating for durability."
-    },
-    "dividing_wall": {
-        "name": "Dividing wall repairs on duplex fibreglass tanks",
-        "brief": "Key Environmental Services repaired the internal dividing wall of a duplex fibreglass storage tank to restore separation between compartments and prevent cross-contamination.",
-        "before": "The dividing wall showed cracks and deterioration, compromising the separation between tank compartments.",
-        "prep": "Both sides of the dividing wall were cleaned and prepared to ensure proper adhesion of repair materials.",
-        "coating": "Structural repairs were made using fibreglass reinforced resin on both sides of the wall. The wall was restored to full strength and sealed to prevent any water seepage between compartments."
-    },
-    "tanking_floor": {
-        "name": "Tanking plant room floors",
-        "brief": "Key Environmental Services applied waterproof tanking to the plant room floor to prevent water ingress and damage in case of tank or pipework leakage.",
-        "before": "The floor lacked waterproof protection and was vulnerable to water damage from potential leaks.",
-        "prep": "The floor surface was cleaned, dried, and any existing defects or cracks were repaired.",
-        "coating": "A professional waterproof tanking system was applied to the entire floor area, creating a continuous protective layer with proper falls and drainage channels."
+    "dwpu": {
+        "name": "DRINKING WATER POLYURETHANE (DWPU)",
+        "benefits": [
+            "WRAS Approved",
+            "Complete Solvent Free Technology",
+            "High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%",
+            "Superb adhesion to steel, concrete, GRP and many other substrates",
+            "High levels of impact and chemical resistance",
+            "Long life performance with minimal maintenance",
+            "Easy clean, ceramic tile-like finish",
+            "Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc."
+        ]
     }
 }
 
+# ===== ADDITIONAL PRODUCTS DATA =====
+ADDITIONAL_PRODUCTS = {
+    "jotamastic_90": {
+        "name": "JOTAMASTIC 90",
+        "reason": "to use in conjunction with JOTUN HARDTOP XP"
+    },
+    "jotun_hardtop": {
+        "name": "JOTUN HARDTOP XP",
+        "reason": "which is a long-lasting topcoat that provides UV and weather resistant protection"
+    }
+}
+
+# ===== PROCESS STEPS DATA =====
+PROCESS_STEPS = {
+    "surface_prep": "The surfaces were manually prepared to provide a surface profile of 0.75mm to accept the new coating.",
+    "repairs": "Localised repairs were completed to restore structural strength and provide increased protection.",
+    "sealing": "Sealing was applied to provide structural strength and improve substrate adhesion of the coating.",
+    "basecoat": "A basecoat of [coating] was then applied to all internal surfaces at a nominal thickness of 300-500 micron.",
+    "topcoat": "A topcoat of [coating] was then applied to all internal surfaces at a nominal thickness of 300-500 micron.",
+    "refill": "The system was disinfected, and refilled, ready to go back online.",
+    "other_tanks": "The same methodology was applied to [asset_name].",
+    "remedials": "The following remedial works were also completed during this project."
+}
+
+# ===== TANK TYPES & SUBTYPES =====
+TANK_TYPES = {
+    "gsm": "Galvanised Steel Tank (GSM)",
+    "grp": "Glass Reinforced Plastic Tank (GRP)",
+    "concrete": "Concrete Tank",
+    "plastic": "Plastic Tank",
+    "asbestos": "Asbestos Tank",
+    "other": "Other"
+}
+
+TANK_SUBTYPES = {
+    "one_piece": "One Piece",
+    "sectional_tif": "Sectional – Totally Internally Flanged",
+    "sectional_pif": "Sectional – Partially Internally Flanged",
+    "sectional_ef": "Sectional – Externally Flanged",
+    "sectional": "Sectional",
+    "other": "Other"
+}
+
+# ===== MAJOR PROJECTS =====
+MAJOR_PROJECTS = {
+    "full_reline": "Full Tank Reline",
+    "bolt_reline": "Bolt restoration and lining",
+    "steel_reline": "Steel restorations and lining",
+    "clean_disinfect": "Tank clean and disinfections",
+    "tank_install": "Tank installation",
+    "tank_remove": "Tank removal",
+    "crack_repair": "Repairing cracks/patch repairs on fibreglass tanks",
+    "dividing_wall": "Dividing wall repairs on duplex fibreglass tanks",
+    "tanking_floor": "Tanking plant room floors",
+}
+
+# ===== REMEDIAL WORKS =====
 REMEDIAL_WORKS = {
     "pipework_reroute": "Pipework rerouting",
     "vent_reroute": "Vent back rerouting",
@@ -92,32 +128,43 @@ REMEDIAL_WORKS = {
     "lid_vents": "Installation of lid vents and/or overflow screens",
     "support_replace": "Hollow support replacements",
     "fibreglass_repair": "Fibreglass repair and strengthening",
+    "access_hatches": "Installing Access Hatches",
 }
+
+def generate_project_brief(company_name, major_project, tank_quantity, tank_type, tank_location, coating_id, additional_products_list):
+    """Generate dynamic project brief based on selections"""
+
+    coating = COATINGS.get(coating_id, {})
+    coating_name = coating.get('name', 'coating')
+    coating_benefits = coating.get('benefits', [])
+
+    benefits_text = "\n".join([f"• {benefit}" for benefit in coating_benefits])
+
+    project_brief = f"{company_name} were asked to provide a solution to {major_project} {tank_quantity} {tank_type} located in {tank_location}. We proposed that each tank be given long term protection by the application of a solvent free polyurethane coating.\n\n"
+
+    project_brief += f"The product employed was {coating_name}, which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n{benefits_text}\n\n"
+
+    if additional_products_list:
+        for product_id in additional_products_list:
+            product = ADDITIONAL_PRODUCTS.get(product_id, {})
+            if product:
+                product_name = product.get('name', '')
+                product_reason = product.get('reason', '')
+                project_brief += f"Additionally, {product_name} was applied {product_reason}.\n\n"
+
+    project_brief += "The following pages show the methodology employed:"
+
+    return project_brief
 
 @app.route('/')
 def index():
-    # Convert project data for HTML (need to flatten it)
-    projects_for_html = {k: v["name"] if isinstance(v, dict) else v
-                        for k, v in MAJOR_PROJECTS.items()}
     return render_template('index.html',
-                         major_projects=projects_for_html,
+                         tank_types=TANK_TYPES,
+                         tank_subtypes=TANK_SUBTYPES,
+                         coatings=COATINGS,
+                         additional_products=ADDITIONAL_PRODUCTS,
+                         major_projects=MAJOR_PROJECTS,
                          remedial_works=REMEDIAL_WORKS)
-
-@app.route('/api/get-descriptions/<project_id>')
-def get_descriptions(project_id):
-    """Get pre-written descriptions for a project type"""
-    if project_id in MAJOR_PROJECTS:
-        project = MAJOR_PROJECTS[project_id]
-        if isinstance(project, dict):
-            return jsonify({
-                'projectBrief': project.get('brief', ''),
-                'before': project.get('before', ''),
-                'preparation': project.get('prep', ''),
-                'baseCoat': project.get('basecoat', ''),
-                'topCoat': project.get('topcoat', ''),
-                'coating': project.get('coating', ''),
-            })
-    return jsonify({'error': 'Project not found'}), 404
 
 @app.route('/api/generate-report', methods=['POST'])
 def generate_report():
@@ -126,7 +173,6 @@ def generate_report():
         data = request.form
         files = request.files
 
-        # Extract form data
         job_details = {
             'project_number': data.get('projectNumber', ''),
             'customer_name': data.get('customerName', ''),
@@ -135,49 +181,45 @@ def generate_report():
             'address_line3': data.get('addressLine3', ''),
             'postcode': data.get('postcode', ''),
             'completion_date': data.get('completionDate', ''),
-        }
-
-        descriptions = {
-            'project_brief': data.get('projectBrief', ''),
-            'before': data.get('before', ''),
-            'preparation': data.get('preparation', ''),
-            'base_coat': data.get('baseCoat', ''),
-            'top_coat': data.get('topCoat', ''),
-            'coating': data.get('coating', ''),
+            'tank_quantity': data.get('tankQuantity', '1'),
+            'tank_location': data.get('tankLocation', ''),
         }
 
         major_project = data.get('majorProject', '')
+        tank_type = data.get('tankType', '')
         work_completed_by = data.get('workCompletedBy', 'key_environmental')
         subcontractor_name = data.get('subcontractorName', '')
+        coating_id = data.get('coating', '')
+        additional_products = data.getlist('additionalProducts[]')
         remedial_works = data.getlist('remedialWorks[]')
         include_guarantee = data.get('includeGuarantee') == 'true'
         include_disinfection = data.get('includeDisinfection') == 'true'
 
-        # Determine company name and footer info
         if work_completed_by == 'subcontracted' and subcontractor_name:
             company_name = subcontractor_name
-            company_phone = "[Subcontractor Phone]"
-            company_email = "[Subcontractor Email]"
-            company_website = "[Subcontractor Website]"
             footer_line = f"For and on behalf of {subcontractor_name}"
         else:
             company_name = "Key Environmental Services Ltd"
-            company_phone = "01789 330830"
-            company_email = "service@key-environmental.co.uk"
-            company_website = "www.watertankrelining.co.uk"
             footer_line = "For and on behalf of Key Environmental Services Ltd"
 
-        # Convert remedial works IDs to names
+        project_brief_text = generate_project_brief(
+            company_name,
+            MAJOR_PROJECTS.get(major_project, major_project),
+            job_details['tank_quantity'],
+            TANK_TYPES.get(tank_type, tank_type),
+            job_details['tank_location'],
+            coating_id,
+            additional_products
+        )
+
         remedial_names = [REMEDIAL_WORKS.get(w, w) for w in remedial_works]
 
-        # Load template
         template_path = 'completion_report_template.docx'
         if not os.path.exists(template_path):
             return jsonify({'error': 'Template file not found'}), 400
 
         doc = Document(template_path)
 
-        # Replace placeholders
         replacements = {
             '[CUSTOMER_NAME]': job_details['customer_name'],
             '[ADDRESS_LINE_1]': job_details['address_line1'],
@@ -187,28 +229,18 @@ def generate_report():
             '[PROJECT_NUMBER]': job_details['project_number'],
             '[COMPLETION_DATE]': job_details['completion_date'],
             '[COMPANY_NAME]': company_name,
-            '[COMPANY_PHONE]': company_phone,
-            '[COMPANY_EMAIL]': company_email,
-            '[COMPANY_WEBSITE]': company_website,
-            '[PROJECT_BRIEF_DESCRIPTION]': descriptions['project_brief'],
-            '[BEFORE_DESCRIPTION]': descriptions['before'],
-            '[PREPARATION_DESCRIPTION]': descriptions['preparation'],
-            '[BASE_COAT_DESCRIPTION]': descriptions.get('base_coat', ''),
-            '[TOP_COAT_DESCRIPTION]': descriptions.get('top_coat', ''),
-            '[COATING_DESCRIPTION]': descriptions.get('coating', ''),
+            '[PROJECT_BRIEF_DESCRIPTION]': project_brief_text,
             '[SIGNATURE_NAME]': 'CON O\'SHEA',
             '[SIGNATURE_TITLE]': 'DIRECTOR',
             '[FOOTER_LINE]': footer_line,
         }
 
-        # Apply replacements to all paragraphs
         for paragraph in doc.paragraphs:
             for run in paragraph.runs:
                 for key, value in replacements.items():
                     if key in run.text:
                         run.text = run.text.replace(key, value)
 
-        # Add remedial works if applicable
         if remedial_names:
             remedial_text = "Remedial works completed: " + ", ".join(remedial_names)
             for paragraph in doc.paragraphs:
@@ -216,23 +248,10 @@ def generate_report():
                     for run in paragraph.runs:
                         run.text = run.text.replace('[REMEDIAL_WORKS_DESCRIPTION]', remedial_text)
 
-        # Handle photo uploads if present
-        for section in ['before', 'preparation', 'baseCoat', 'topCoat', 'remedial']:
-            file_key = f'photo_{section}'
-            if file_key in files:
-                photo_file = files[file_key]
-                # Save photo temporarily and insert into doc
-                if photo_file:
-                    # This is a simplified version - you may want to embed photos properly
-                    pass
-
-        # Save document
         output_filename = f"{job_details['project_number']} - {job_details['customer_name']} - Completion Report.docx"
         output_path = os.path.join('reports', output_filename)
 
-        # Create reports directory if it doesn't exist
         os.makedirs('reports', exist_ok=True)
-
         doc.save(output_path)
 
         return jsonify({

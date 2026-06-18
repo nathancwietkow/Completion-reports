@@ -46,6 +46,8 @@
 
         .content {
             padding: 40px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
 
         .form-section {
@@ -85,9 +87,8 @@
         }
 
         input[type="text"],
+        input[type="number"],
         input[type="date"],
-        input[type="email"],
-        textarea,
         select {
             padding: 12px;
             border: 1px solid #ddd;
@@ -97,20 +98,11 @@
             transition: all 0.3s ease;
         }
 
-        input[type="text"]:focus,
-        input[type="date"]:focus,
-        input[type="email"]:focus,
-        textarea:focus,
+        input:focus,
         select:focus {
             outline: none;
             border-color: #667eea;
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        textarea {
-            min-height: 100px;
-            resize: vertical;
-            font-family: inherit;
         }
 
         .checkbox-group {
@@ -148,55 +140,22 @@
             flex: 1;
         }
 
-        .radio-group {
-            display: flex;
-            gap: 20px;
-        }
-
-        .radio-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .radio-item input[type="radio"] {
-            accent-color: #667eea;
-            cursor: pointer;
-        }
-
-        .radio-item label {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .file-upload {
-            border: 2px dashed #ddd;
+        .benefits-preview {
+            background: #f8f9ff;
+            padding: 15px;
             border-radius: 6px;
-            padding: 20px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background-color: #f8f9fa;
-        }
-
-        .file-upload:hover {
-            border-color: #667eea;
-            background-color: #f0f2ff;
-        }
-
-        .file-upload input[type="file"] {
-            display: none;
-        }
-
-        .file-upload-text {
-            color: #666;
+            margin-top: 10px;
             font-size: 14px;
+            line-height: 1.6;
         }
 
-        .file-name {
-            color: #667eea;
-            font-weight: 500;
-            margin-top: 8px;
+        .benefits-preview ul {
+            list-style-position: inside;
+            margin: 0;
+        }
+
+        .benefits-preview li {
+            margin: 5px 0;
         }
 
         .button-group {
@@ -283,20 +242,10 @@
             100% { transform: rotate(360deg); }
         }
 
-        .two-column-checks {
+        .two-column {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-        }
-
-        .download-link {
-            color: #667eea;
-            text-decoration: none;
-            font-weight: 600;
-        }
-
-        .download-link:hover {
-            text-decoration: underline;
         }
 
         @media (max-width: 768px) {
@@ -304,20 +253,8 @@
                 grid-template-columns: 1fr;
             }
 
-            .two-column-checks {
+            .two-column {
                 grid-template-columns: 1fr;
-            }
-
-            .header {
-                padding: 25px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .content {
-                padding: 25px;
             }
 
             .button-group {
@@ -367,23 +304,21 @@
                             <input type="text" name="customerName" required>
                         </div>
                     </div>
-                    <div class="form-grid full">
+                    <div class="form-grid">
                         <div class="form-group">
                             <label>Address Line 1 *</label>
                             <input type="text" name="addressLine1" required>
                         </div>
-                    </div>
-                    <div class="form-grid">
                         <div class="form-group">
                             <label>Address Line 2</label>
                             <input type="text" name="addressLine2">
                         </div>
-                        <div class="form-group">
-                            <label>Address Line 3 / Town</label>
-                            <input type="text" name="addressLine3">
-                        </div>
                     </div>
                     <div class="form-grid">
+                        <div class="form-group">
+                            <label>Town/City *</label>
+                            <input type="text" name="addressLine3" required>
+                        </div>
                         <div class="form-group">
                             <label>Postcode *</label>
                             <input type="text" name="postcode" required>
@@ -391,30 +326,61 @@
                     </div>
                 </div>
 
-                <!-- Who Did The Work Section -->
+                <!-- Work Details Section -->
                 <div class="form-section">
-                    <div class="section-title">Who Did The Work?</div>
-                    <div class="form-group full">
-                        <label>Work Completed By *</label>
-                        <select name="workCompletedBy" required id="workCompletedBy">
-                            <option value="">-- Choose --</option>
-                            <option value="key_environmental">Key Environmental Services</option>
-                            <option value="subcontracted">Subcontracted Work</option>
-                        </select>
-                    </div>
-                    <div class="form-group full" id="subcontractorDetails" style="display:none;">
-                        <label>Subcontractor Company Name *</label>
-                        <input type="text" name="subcontractorName" placeholder="Enter subcontractor company name">
+                    <div class="section-title">Work Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Work Completed By *</label>
+                            <select name="workCompletedBy" required id="workCompletedBy">
+                                <option value="">-- Choose --</option>
+                                <option value="key_environmental">Key Environmental Services</option>
+                                <option value="subcontracted">Subcontracted Work</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="subcontractorDetails" style="display:none;">
+                            <label>Subcontractor Company Name *</label>
+                            <input type="text" name="subcontractorName">
+                        </div>
                     </div>
                 </div>
 
-                <!-- Project Type Section -->
+                <!-- Tank Details Section -->
+                <div class="form-section">
+                    <div class="section-title">Tank Details</div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Tank Type *</label>
+                            <select name="tankType" required id="tankType">
+                                <option value="">-- Choose --</option>
+                                <option value="gsm">Galvanised Steel Tank (GSM)</option>
+                                <option value="grp">Glass Reinforced Plastic Tank (GRP)</option>
+                                <option value="concrete">Concrete Tank</option>
+                                <option value="plastic">Plastic Tank</option>
+                                <option value="asbestos">Asbestos Tank</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tank Quantity *</label>
+                            <input type="number" name="tankQuantity" min="1" value="1" required>
+                        </div>
+                    </div>
+                    <div class="form-grid full">
+                        <div class="form-group">
+                            <label>Tank Location *</label>
+                            <input type="text" name="tankLocation" placeholder="e.g., London, Manchester" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Project Type Section -->
                 <div class="form-section">
                     <div class="section-title">Project Type</div>
                     <div class="form-group full">
-                        <label>Select Main Project Type *</label>
+                        <label>Main Project Type *</label>
                         <select name="majorProject" required id="majorProject">
-                            <option value="">-- Choose a project type --</option>
+                            <option value="">-- Choose --</option>
                             <option value="full_reline">Full Tank Reline</option>
                             <option value="bolt_reline">Bolt restoration and lining</option>
                             <option value="steel_reline">Steel restorations and lining</option>
@@ -428,10 +394,40 @@
                     </div>
                 </div>
 
+                <!-- Coating Selection Section -->
+                <div class="form-section">
+                    <div class="section-title">Coating Selection</div>
+                    <div class="form-group full">
+                        <label>Main Coating Product *</label>
+                        <select name="coating" required id="coatingSelect">
+                            <option value="">-- Choose --</option>
+                            <option value="resichem_507">RESICHEM 507 DWPU</option>
+                            <option value="maxline_100">MAXLINE 100 DWPU</option>
+                            <option value="dwpu">DRINKING WATER POLYURETHANE (DWPU)</option>
+                        </select>
+                    </div>
+                    <div id="coatingBenefits" class="benefits-preview" style="display:none;"></div>
+                </div>
+
+                <!-- Additional Products Section -->
+                <div class="form-section">
+                    <div class="section-title">Additional Products (Optional)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalProducts[]" value="jotamastic_90" id="prod1">
+                            <label for="prod1">JOTAMASTIC 90 (primer for use with JOTUN HARDTOP XP)</label>
+                        </div>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="additionalProducts[]" value="jotun_hardtop" id="prod2">
+                            <label for="prod2">JOTUN HARDTOP XP (UV/weather resistant topcoat)</label>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Remedial Works Section -->
                 <div class="form-section">
                     <div class="section-title">Remedial Works (Select if applicable)</div>
-                    <div class="checkbox-group two-column-checks">
+                    <div class="checkbox-group two-column">
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="pipework_reroute" id="rw1">
                             <label for="rw1">Pipework rerouting</label>
@@ -450,7 +446,7 @@
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="insulation_wrap" id="rw5">
-                            <label for="rw5">Insulation wrapping pipework/tank</label>
+                            <label for="rw5">Insulation wrapping</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="lid_replace" id="rw6">
@@ -458,75 +454,40 @@
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="lid_vents" id="rw7">
-                            <label for="rw7">Installation of lid vents and/or overflow screens</label>
+                            <label for="rw7">Lid vents/overflow screens</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="support_replace" id="rw8">
-                            <label for="rw8">Hollow support replacements</label>
+                            <label for="rw8">Support replacements</label>
                         </div>
                         <div class="checkbox-item">
                             <input type="checkbox" name="remedialWorks[]" value="fibreglass_repair" id="rw9">
-                            <label for="rw9">Fibreglass repair and strengthening</label>
+                            <label for="rw9">Fibreglass repair</label>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Work Descriptions Section -->
-                <div class="form-section">
-                    <div class="section-title">Work Descriptions</div>
-                    <div class="form-group full">
-                        <label>Project Brief *</label>
-                        <textarea name="projectBrief" placeholder="Describe the work undertaken and why it was needed..." required></textarea>
-                    </div>
-                    <div class="form-group full">
-                        <label>BEFORE - Initial Condition *</label>
-                        <textarea name="before" placeholder="Describe the condition before work commenced..." required></textarea>
-                    </div>
-                    <div class="form-group full">
-                        <label>PREPARATION - Prep Work *</label>
-                        <textarea name="preparation" placeholder="Describe surface preparation and setup work..." required></textarea>
-                    </div>
-                    <div class="form-group full" id="baseCoatGroup" style="display:none;">
-                        <label>BASE COAT - Application</label>
-                        <textarea name="baseCoat" placeholder="Describe base coat application..."></textarea>
-                    </div>
-                    <div class="form-group full" id="topCoatGroup" style="display:none;">
-                        <label>TOP COAT - Finishing</label>
-                        <textarea name="topCoat" placeholder="Describe top coat application and finishing..."></textarea>
-                    </div>
-                    <div class="form-group full" id="coatingGroup" style="display:none;">
-                        <label>COATING/WORK - Description</label>
-                        <textarea name="coating" placeholder="Describe the coating or work performed..."></textarea>
+                        <div class="checkbox-item">
+                            <input type="checkbox" name="remedialWorks[]" value="access_hatches" id="rw10">
+                            <label for="rw10">Installing Access Hatches</label>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Certificates Section -->
                 <div class="form-section">
                     <div class="section-title">Certificates</div>
-                    <div class="form-group full">
-                        <label>Include 10-Year Guarantee Certificate?</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="guaranteeYes" name="includeGuarantee" value="true">
-                                <label for="guaranteeYes">Yes</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="guaranteeNo" name="includeGuarantee" value="false" checked>
-                                <label for="guaranteeNo">No</label>
-                            </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Include 10-Year Guarantee?</label>
+                            <select name="includeGuarantee">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="form-group full">
-                        <label>Include Disinfection Certificate?</label>
-                        <div class="radio-group">
-                            <div class="radio-item">
-                                <input type="radio" id="disinfectionYes" name="includeDisinfection" value="true">
-                                <label for="disinfectionYes">Yes</label>
-                            </div>
-                            <div class="radio-item">
-                                <input type="radio" id="disinfectionNo" name="includeDisinfection" value="false" checked>
-                                <label for="disinfectionNo">No</label>
-                            </div>
+                        <div class="form-group">
+                            <label>Include Disinfection Certificate?</label>
+                            <select name="includeDisinfection">
+                                <option value="false">No</option>
+                                <option value="true">Yes</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -541,64 +502,41 @@
     </div>
 
     <script>
-        // Show/hide subcontractor details
+        // Coating data
+        const coatingData = {
+            resichem_507: {
+                name: "RESICHEM 507 DWPU",
+                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "Extremely Fast Curing Times", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Fast refill - 6hrs minimum", "Long life performance", "Easy clean finish", "Brush/roller or spray application", "Excellent track record"]
+            },
+            maxline_100: {
+                name: "MAXLINE 100 DWPU",
+                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Brush/roller or spray application", "Excellent track record"]
+            },
+            dwpu: {
+                name: "DRINKING WATER POLYURETHANE (DWPU)",
+                benefits: ["WRAS Approved", "Complete Solvent Free Technology", "High flexibility", "Superb adhesion", "High impact/chemical resistance", "Long life performance", "Easy clean finish", "Excellent track record"]
+            }
+        };
+
+        // Show/hide subcontractor field
         document.getElementById('workCompletedBy').addEventListener('change', function(e) {
-            const subcontractorDetails = document.getElementById('subcontractorDetails');
-            const subcontractorName = document.querySelector('[name="subcontractorName"]');
+            document.getElementById('subcontractorDetails').style.display = e.target.value === 'subcontracted' ? 'flex' : 'none';
+        });
 
-            if (e.target.value === 'subcontracted') {
-                subcontractorDetails.style.display = 'flex';
-                subcontractorName.required = true;
+        // Display coating benefits
+        document.getElementById('coatingSelect').addEventListener('change', function(e) {
+            const benefitsDiv = document.getElementById('coatingBenefits');
+            if (e.target.value && coatingData[e.target.value]) {
+                const coating = coatingData[e.target.value];
+                const benefitsList = coating.benefits.map(b => `<li>${b}</li>`).join('');
+                benefitsDiv.innerHTML = `<strong>${coating.name} Benefits:</strong><ul>${benefitsList}</ul>`;
+                benefitsDiv.style.display = 'block';
             } else {
-                subcontractorDetails.style.display = 'none';
-                subcontractorName.required = false;
-                subcontractorName.value = '';
+                benefitsDiv.style.display = 'none';
             }
         });
 
-        // Show/hide relevant sections based on project type and auto-fill descriptions
-        document.getElementById('majorProject').addEventListener('change', async function(e) {
-            const projectId = e.target.value;
-            const fullReline = projectId === 'full_reline';
-
-            document.getElementById('baseCoatGroup').style.display = fullReline ? 'flex' : 'none';
-            document.getElementById('topCoatGroup').style.display = fullReline ? 'flex' : 'none';
-            document.getElementById('coatingGroup').style.display = fullReline ? 'none' : 'flex';
-
-            // Update required status
-            const baseCoat = document.querySelector('[name="baseCoat"]');
-            const topCoat = document.querySelector('[name="topCoat"]');
-            const coating = document.querySelector('[name="coating"]');
-
-            if (fullReline) {
-                baseCoat.required = true;
-                topCoat.required = true;
-                coating.required = false;
-            } else {
-                baseCoat.required = false;
-                topCoat.required = false;
-                coating.required = true;
-            }
-
-            // Auto-fill descriptions
-            if (projectId) {
-                try {
-                    const response = await fetch(`/api/get-descriptions/${projectId}`);
-                    const data = await response.json();
-
-                    if (data.projectBrief) document.querySelector('[name="projectBrief"]').value = data.projectBrief;
-                    if (data.before) document.querySelector('[name="before"]').value = data.before;
-                    if (data.preparation) document.querySelector('[name="preparation"]').value = data.preparation;
-                    if (data.baseCoat) document.querySelector('[name="baseCoat"]').value = data.baseCoat;
-                    if (data.topCoat) document.querySelector('[name="topCoat"]').value = data.topCoat;
-                    if (data.coating) document.querySelector('[name="coating"]').value = data.coating;
-                } catch (error) {
-                    console.log('Could not load descriptions, that\'s okay');
-                }
-            }
-        });
-
-        // Handle form submission
+        // Form submission
         document.getElementById('reportForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
@@ -624,11 +562,9 @@
                     document.getElementById('downloadLink').href = `/api/download/${encodeURIComponent(result.filepath)}`;
                     successMessage.style.display = 'block';
                     loading.style.display = 'none';
-
-                    // Scroll to success message
                     successMessage.scrollIntoView({ behavior: 'smooth' });
                 } else {
-                    throw new Error(result.error || 'Unknown error occurred');
+                    throw new Error(result.error || 'Unknown error');
                 }
             } catch (error) {
                 errorMessage.textContent = '❌ Error: ' + error.message;
@@ -638,9 +574,8 @@
             }
         });
 
-        // Set today's date as default
-        const today = new Date().toISOString().split('T')[0];
-        document.querySelector('[name="completionDate"]').value = today;
+        // Set today's date
+        document.querySelector('[name="completionDate"]').valueAsDate = new Date();
     </script>
 </body>
 </html>
