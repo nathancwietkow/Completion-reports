@@ -227,80 +227,118 @@ def generate_report():
             '[SCOPE_OF_WORKS]': scope_of_works,
         }
 
+        # Rebuild paragraph text with replacements
+        def rebuild_paragraph(paragraph, replacements):
+            """Rebuild paragraph with all replacements applied."""
+            full_text = ''.join([run.text for run in paragraph.runs])
+
+            # Apply all replacements
+            for placeholder, value in replacements.items():
+                full_text = full_text.replace(placeholder, value)
+
+            # Clear and rebuild paragraph
+            paragraph.clear()
+            paragraph.add_run(full_text)
+
         # Replace in all paragraphs
-        for placeholder, value in replacements.items():
-            for paragraph in doc.paragraphs:
-                if placeholder in paragraph.text:
-                    for run in paragraph.runs:
-                        if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, value)
+        for paragraph in doc.paragraphs:
+            rebuild_paragraph(paragraph, replacements)
 
-            # Replace in tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:
-                            if placeholder in paragraph.text:
-                                for run in paragraph.runs:
-                                    if placeholder in run.text:
-                                        run.text = run.text.replace(placeholder, value)
+        # Replace in tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        rebuild_paragraph(paragraph, replacements)
 
-            # Replace in headers/footers
-            for section in doc.sections:
-                for paragraph in section.header.paragraphs:
-                    if placeholder in paragraph.text:
-                        for run in paragraph.runs:
-                            if placeholder in run.text:
-                                run.text = run.text.replace(placeholder, value)
+        # Replace in headers/footers
+        for section in doc.sections:
+            for paragraph in section.header.paragraphs:
+                rebuild_paragraph(paragraph, replacements)
 
-                for paragraph in section.footer.paragraphs:
-                    if placeholder in paragraph.text:
-                        for run in paragraph.runs:
-                            if placeholder in run.text:
-                                run.text = run.text.replace(placeholder, value)
+            for paragraph in section.footer.paragraphs:
+                rebuild_paragraph(paragraph, replacements)
 
         # STEP 2: Handle [ISSUES_RAISED] - replace with bullet points
         # Find and remove the [ISSUES_RAISED] placeholders, replace with actual issues
         for paragraph in doc.paragraphs:
             if '[ISSUES_RAISED]' in paragraph.text:
-                # Get the parent element
+                # Get the parent element and style from original
                 p_element = paragraph._element
                 parent = p_element.getparent()
+                original_style = paragraph.style.name
 
                 # Find insertion point
                 insert_index = list(parent).index(p_element)
 
-                # Remove the placeholder paragraph
-                parent.remove(p_element)
+                # Remove the placeholder paragraphs (both [ISSUES_RAISED] entries)
+                issues_to_remove = []
+                for p in doc.paragraphs:
+                    if '[ISSUES_RAISED]' in p.text:
+                        issues_to_remove.append(p)
 
-                # Insert a new paragraph for each issue with bullet
-                for issue in issues:
-                    new_para = doc.add_paragraph(f"• {issue}")
-                    parent.insert(insert_index, new_para._element)
-                    insert_index += 1
+                for p in issues_to_remove:
+                    p._element.getparent().remove(p._element)
 
-                # Only process first occurrence
+                # Find new insertion point after removals
+                if insert_index > 0:
+                    insert_element = doc.paragraphs[insert_index - 1]._element
+                else:
+                    insert_element = None
+
+                # Insert a new paragraph for each issue using original style
+                for i, issue in enumerate(issues):
+                    new_para = doc.add_paragraph(issue, style=original_style)
+                    if insert_element is not None:
+                        parent.insert(list(parent).index(insert_element) + 1 + i, new_para._element)
+                    else:
+                        parent.insert(i, new_para._element)
+
+                # Only process once
                 break
 
-        # STEP 3: Handle photos
+        # STEP 3: Handle photos - 2 column layout
         def insert_photo(doc, placeholder, photo_files):
             for paragraph in doc.paragraphs:
                 if placeholder in paragraph.text:
-                    paragraph.clear()
-                    for i, photo_file in enumerate(photo_files):
-                        if photo_file and photo_file.filename:
-                            temp_path = f"/tmp/{photo_file.filename}"
-                            photo_file.save(temp_path)
-                            run = paragraph.add_run()
-                            try:
-                                run.add_picture(temp_path, width=Inches(5.5))
-                            except Exception as e:
-                                run.text = f"[Photo error]"
-                            # Add spacing between photos
-                            if i < len(photo_files) - 1:
-                                paragraph.add_run('\n\n')
-                            if os.path.exists(temp_path):
-                                os.remove(temp_path)
+                    # Get parent and insert index
+                    p_element = paragraph._element
+                    parent = p_element.getparent()
+                    insert_index = list(parent).index(p_element)
+
+                    # Remove placeholder
+                    parent.remove(p_element)
+
+                    # Create table for 2-column photo layout
+                    if photo_files and any(f.filename for f in photo_files):
+                        # Calculate rows needed (2 photos per row)
+                        num_photos = len([f for f in photo_files if f and f.filename])
+                        num_rows = (num_photos + 1) // 2
+
+                        table = doc.add_table(rows=num_rows, cols=2)
+                        table.autofit = False
+
+                        photo_index = 0
+                        for row_idx, row in enumerate(table.rows):
+                            for col_idx, cell in enumerate(row.cells):
+                                if photo_index < len(photo_files):
+                                    photo_file = photo_files[photo_index]
+                                    if photo_file and photo_file.filename:
+                                        temp_path = f"/tmp/{photo_file.filename}"
+                                        photo_file.save(temp_path)
+                                        cell.paragraphs[0].clear()
+                                        run = cell.paragraphs[0].add_run()
+                                        try:
+                                            run.add_picture(temp_path, width=Inches(3))
+                                        except:
+                                            cell.paragraphs[0].text = "[Photo error]"
+                                        if os.path.exists(temp_path):
+                                            os.remove(temp_path)
+                                    photo_index += 1
+
+                        # Move table to correct position
+                        tbl = table._element
+                        parent.insert(insert_index, tbl)
                     return
 
             # Also search tables
@@ -309,19 +347,23 @@ def generate_report():
                     for cell in row.cells:
                         for paragraph in cell.paragraphs:
                             if placeholder in paragraph.text:
+                                # Get parent and position
+                                p_element = paragraph._element
+                                parent = p_element.getparent()
+
+                                # Clear placeholder
                                 paragraph.clear()
+
+                                # Add photos to cell
                                 for i, photo_file in enumerate(photo_files):
                                     if photo_file and photo_file.filename:
                                         temp_path = f"/tmp/{photo_file.filename}"
                                         photo_file.save(temp_path)
                                         run = paragraph.add_run()
                                         try:
-                                            run.add_picture(temp_path, width=Inches(5.5))
-                                        except Exception as e:
-                                            run.text = f"[Photo error]"
-                                        # Add spacing between photos
-                                        if i < len(photo_files) - 1:
-                                            paragraph.add_run('\n\n')
+                                            run.add_picture(temp_path, width=Inches(2.5))
+                                        except:
+                                            run.text = "[Photo error]"
                                         if os.path.exists(temp_path):
                                             os.remove(temp_path)
                                 return
