@@ -95,6 +95,18 @@ def generate_report():
 
         doc = Document('completion_report_template.docx')
 
+        # Get process step descriptions from form
+        process_steps = {
+            'before': data.get('processStepBefore', ''),
+            'preparation': data.get('processStepPreparation', ''),
+            'repairs': data.get('processStepRepairs', ''),
+            'sealing': data.get('processStepSealing', ''),
+            'basecoat': data.get('processStepBasecoat', ''),
+            'topcoat': data.get('processStepTopcoat', ''),
+            'refill': data.get('processStepRefill', ''),
+            'other': data.get('processStepOther', ''),
+        }
+
         # Build replacements dictionary
         replacements = {
             '[SITE_NAME]': site_name,
@@ -112,59 +124,59 @@ def generate_report():
             '[COMPANY_NAME]': company,
             '[COMPANY_CONTACT_DETAILS]': company_contact_details,
             '[SCOPE_OF_WORKS]': scope_of_works,
+            '[BEFORE_DESCRIPTION]': process_steps['before'],
+            '[PREPARATION_DESCRIPTION]': process_steps['preparation'],
+            '[REPAIRS_DESCRIPTION]': process_steps['repairs'],
+            '[SEALING_DESCRIPTION]': process_steps['sealing'],
+            '[BASE_COAT_DESCRIPTION]': process_steps['basecoat'],
+            '[TOP_COAT_DESCRIPTION]': process_steps['topcoat'],
+            '[REFILL_DESCRIPTION]': process_steps['refill'],
         }
 
-        # STEP 1: Replace all text placeholders
-        def replace_text(element, replacements):
-            """Replace text in paragraphs and tables"""
+        # STEP 1: Replace all text placeholders (handles split placeholders across runs)
+        def replace_paragraph_text(paragraph, replacements):
+            """Replace all placeholders in a paragraph, even if split across runs."""
+            full_text = ''.join(run.text for run in paragraph.runs)
+
+            # Check if any replacement needed
+            if not any(ph in full_text for ph in replacements):
+                return
+
+            # Apply all replacements
+            new_text = full_text
             for placeholder, value in replacements.items():
-                for paragraph in element.paragraphs if hasattr(element, 'paragraphs') else []:
-                    if placeholder in paragraph.text:
-                        for run in paragraph.runs:
-                            if placeholder in run.text:
-                                run.text = run.text.replace(placeholder, value)
+                new_text = new_text.replace(placeholder, value)
 
-            # Handle tables
-            for table in element.tables if hasattr(element, 'tables') else []:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:
-                            if placeholder in paragraph.text:
-                                for run in paragraph.runs:
-                                    if placeholder in run.text:
-                                        run.text = run.text.replace(placeholder, value)
+            if new_text == full_text:
+                return
 
-        # Replace in document
-        for placeholder, value in replacements.items():
-            for paragraph in doc.paragraphs:
-                if placeholder in paragraph.text:
-                    for run in paragraph.runs:
-                        if placeholder in run.text:
-                            run.text = run.text.replace(placeholder, value)
+            # Clear all runs and put new text in first run
+            for run in paragraph.runs:
+                run.text = ''
 
-            # Replace in tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:
-                            if placeholder in paragraph.text:
-                                for run in paragraph.runs:
-                                    if placeholder in run.text:
-                                        run.text = run.text.replace(placeholder, value)
+            if paragraph.runs:
+                paragraph.runs[0].text = new_text
+            else:
+                paragraph.add_run(new_text)
 
-            # Replace in headers/footers
-            for section in doc.sections:
-                for paragraph in section.header.paragraphs:
-                    if placeholder in paragraph.text:
-                        for run in paragraph.runs:
-                            if placeholder in run.text:
-                                run.text = run.text.replace(placeholder, value)
+        # Replace in all paragraphs
+        for paragraph in doc.paragraphs:
+            replace_paragraph_text(paragraph, replacements)
 
-                for paragraph in section.footer.paragraphs:
-                    if placeholder in paragraph.text:
-                        for run in paragraph.runs:
-                            if placeholder in run.text:
-                                run.text = run.text.replace(placeholder, value)
+        # Replace in tables
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    for paragraph in cell.paragraphs:
+                        replace_paragraph_text(paragraph, replacements)
+
+        # Replace in headers/footers
+        for section in doc.sections:
+            for paragraph in section.header.paragraphs:
+                replace_paragraph_text(paragraph, replacements)
+
+            for paragraph in section.footer.paragraphs:
+                replace_paragraph_text(paragraph, replacements)
 
         # STEP 2: Handle [ISSUES_RAISED] - insert issue text into existing paragraphs
         issue_index = 0
@@ -183,9 +195,30 @@ def generate_report():
                             run.text = run.text.replace('[ISSUES_RAISED]', '')
 
         # STEP 3: Handle photos - 2 column layout
-        def insert_photo(doc, placeholder, photo_files):
+        def insert_photo(doc, placeholder, photo_files, center=False):
             for paragraph in doc.paragraphs:
                 if placeholder in paragraph.text:
+                    # For front building photo, center align and add to existing paragraph
+                    if center and placeholder == '[FRONT_BUILDING_PHOTO]':
+                        paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                        # Clear and add photo
+                        for run in paragraph.runs:
+                            run.text = ''
+
+                        if photo_files and photo_files[0].filename:
+                            photo_file = photo_files[0]
+                            temp_path = f"/tmp/{photo_file.filename}"
+                            photo_file.save(temp_path)
+                            run = paragraph.add_run()
+                            try:
+                                run.add_picture(temp_path, width=Inches(3))
+                            except:
+                                run.text = "[Photo error]"
+                            if os.path.exists(temp_path):
+                                os.remove(temp_path)
+                        return
+
+                    # For other photos, use 2-column table layout
                     p_element = paragraph._element
                     parent = p_element.getparent()
                     insert_index = list(parent).index(p_element)
@@ -224,18 +257,18 @@ def generate_report():
 
         # Insert photos
         photo_mapping = {
-            'photo_front_building': '[FRONT_BUILDING_PHOTO]',
-            'photo_before': '[BEFORE_PHOTO_PLACEHOLDER]',
-            'photo_surface_prep': '[PREPARATION_PHOTO_PLACEHOLDER]',
-            'photo_basecoat': '[BASE_COAT_PHOTO_PLACEHOLDER]',
-            'photo_topcoat': '[TOP_COAT_PHOTO_PLACEHOLDER]',
-            'photo_remedials': '[REMEDIAL_WORKS_PHOTO_PLACEHOLDER]',
+            'photo_front_building': ('[FRONT_BUILDING_PHOTO]', True),
+            'photo_before': ('[BEFORE_PHOTO_PLACEHOLDER]', False),
+            'photo_surface_prep': ('[PREPARATION_PHOTO_PLACEHOLDER]', False),
+            'photo_basecoat': ('[BASE_COAT_PHOTO_PLACEHOLDER]', False),
+            'photo_topcoat': ('[TOP_COAT_PHOTO_PLACEHOLDER]', False),
+            'photo_remedials': ('[REMEDIAL_WORKS_PHOTO_PLACEHOLDER]', False),
         }
 
-        for form_field, placeholder in photo_mapping.items():
+        for form_field, (placeholder, center) in photo_mapping.items():
             photos = request.files.getlist(form_field)
             if photos:
-                insert_photo(doc, placeholder, photos)
+                insert_photo(doc, placeholder, photos, center=center)
 
         # STEP 4: Handle remedial works
         remedial = [REMEDIAL_WORKS.get(w, w) for w in data.getlist('remedialWorks[]')]
