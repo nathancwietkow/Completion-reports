@@ -227,37 +227,41 @@ def generate_report():
             '[SCOPE_OF_WORKS]': scope_of_works,
         }
 
-        # Rebuild paragraph text with replacements
-        def rebuild_paragraph(paragraph, replacements):
-            """Rebuild paragraph with all replacements applied."""
+        # Replace text - only rebuild if placeholder found
+        def replace_in_paragraph(paragraph, replacements):
+            """Replace placeholders in paragraph."""
             full_text = ''.join([run.text for run in paragraph.runs])
 
-            # Apply all replacements
-            for placeholder, value in replacements.items():
-                full_text = full_text.replace(placeholder, value)
+            # Check if any placeholder exists
+            has_placeholder = any(placeholder in full_text for placeholder in replacements.keys())
 
-            # Clear and rebuild paragraph
-            paragraph.clear()
-            paragraph.add_run(full_text)
+            if has_placeholder:
+                # Apply all replacements
+                for placeholder, value in replacements.items():
+                    full_text = full_text.replace(placeholder, value)
+
+                # Clear and rebuild paragraph
+                paragraph.clear()
+                paragraph.add_run(full_text)
 
         # Replace in all paragraphs
         for paragraph in doc.paragraphs:
-            rebuild_paragraph(paragraph, replacements)
+            replace_in_paragraph(paragraph, replacements)
 
         # Replace in tables
         for table in doc.tables:
             for row in table.rows:
                 for cell in row.cells:
                     for paragraph in cell.paragraphs:
-                        rebuild_paragraph(paragraph, replacements)
+                        replace_in_paragraph(paragraph, replacements)
 
         # Replace in headers/footers
         for section in doc.sections:
             for paragraph in section.header.paragraphs:
-                rebuild_paragraph(paragraph, replacements)
+                replace_in_paragraph(paragraph, replacements)
 
             for paragraph in section.footer.paragraphs:
-                rebuild_paragraph(paragraph, replacements)
+                replace_in_paragraph(paragraph, replacements)
 
         # STEP 2: Handle [ISSUES_RAISED] - replace with bullet points
         # Find and remove the [ISSUES_RAISED] placeholders, replace with actual issues
