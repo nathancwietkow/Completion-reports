@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 from flask import Flask, render_template, request, jsonify, send_file
 from docx import Document
-from docx.shared import Inches
+from docx.shared import Inches, Pt
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 import os
 
 app = Flask(__name__)
@@ -25,135 +26,23 @@ SUBCONTRACTORS = {
 }
 
 SCOPE_OF_WORKS = {
-    "Full Asset Reline": """We proposed that the tank(s) be given long term protection by the application of a solvent free polyurethane coating.
+    "Full Asset Reline": "We proposed that the tank(s) be given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
+    "Cooling Tower Reline": "We proposed that the tower(s) be given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
+    "Cooling Tower Repair": "We proposed that the tower(s) be given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-    "Cooling Tower Reline": """We proposed that the tower(s) be given long term protection by the application of a solvent free polyurethane coating.
+    "Bolt restoration and lining": "We proposed that the tank(s) upper bolted areas be given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
+    "Steel restorations and lining": "We proposed that the tank(s) exposed steel areas be given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
+    "Asset clean and disinfections": "We proposed that the tanks would be drained, dried and thoroughly cleaned. These will then be disinfected, ahead of refilling, and reinstating back into the system.",
 
-    "Cooling Tower Repair": """We proposed that the tower(s) be given long term protection by the application of a solvent free polyurethane coating.
+    "Repairing cracks/patch repairs": "We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
+    "Dividing wall repairs": "We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
-
-    "Bolt restoration and lining": """We proposed that the tank(s) upper bolted areas be given long term protection by the application of a solvent free polyurethane coating.
-
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
-
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
-
-    "Steel restorations and lining": """We proposed that the tank(s) exposed steel areas be given long term protection by the application of a solvent free polyurethane coating.
-
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
-
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
-
-    "Asset clean and disinfections": """We proposed that the tanks would be drained, dried and thoroughly cleaned. These will then be disinfected, ahead of refilling, and reinstating back into the system.""",
-
-    "Repairing cracks/patch repairs": """We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.
-
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
-
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
-
-    "Dividing wall repairs": """We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.
-
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
-
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
-
-    "Tanking plant room floors": """We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.
-
-The product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:
-
-• WRAS Approved
-• Complete Solvent Free Technology
-• Extremely Fast Curing Times, even at low temperatures
-• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%
-• Superb adhesion to steel, concrete, GRP and many other substrates.
-• High levels of impact and chemical resistance.
-• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.
-• Long life performance with minimal maintenance
-• Easy clean, ceramic tile-like finish
-• Application by brush / roller or plural component spray equipment
-• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.""",
+    "Tanking plant room floors": "We proposed that the areas of concern be reinforced, then given long term protection by the application of a solvent free polyurethane coating.\n\nThe product employed was [COATING], which offers numerous economic, technical and environmental features and benefits, some of which are highlighted below:\n\n• WRAS Approved\n• Complete Solvent Free Technology\n• Extremely Fast Curing Times, even at low temperatures\n• High degree of flexibility @ > 35%, capable of accommodating structural movement compared with resin / epoxy / bitumastic coatings of <1.0%\n• Superb adhesion to steel, concrete, GRP and many other substrates.\n• High levels of impact and chemical resistance.\n• Reduced downtime of storage tanks and process vessels - refill after minimum of 6hrs after completion.\n• Long life performance with minimal maintenance\n• Easy clean, ceramic tile-like finish\n• Application by brush / roller or plural component spray equipment\n• Excellent track record for applications such as drinking water tanks, cooling towers, reservoirs etc.",
 }
 
 @app.route('/')
@@ -189,7 +78,7 @@ def generate_report():
         else:
             company_contact_details = "[Contact details to be added]"
 
-        # Get coating name if selected
+        # Get coating name
         coating_names = {
             'resichem_507': 'RESICHEM 507 DWPU',
             'maxline_100': 'MAXLINE 100 DWPU',
@@ -197,7 +86,7 @@ def generate_report():
         }
         coating_name = coating_names.get(data.get('coating', ''), 'the specified coating')
 
-        # Get scope of works for this project type
+        # Get scope of works
         scope_of_works = SCOPE_OF_WORKS.get(major_project, '')
         scope_of_works = scope_of_works.replace('[COATING]', coating_name)
 
@@ -225,75 +114,73 @@ def generate_report():
             '[SCOPE_OF_WORKS]': scope_of_works,
         }
 
-        # STEP 1: Replace text while preserving formatting
-        def replace_text_preserve_format(paragraph, replacements):
-            """Replace placeholders in paragraph, preserving all formatting."""
-            full_text = ''.join(run.text for run in paragraph.runs)
-
-            # Check if replacement needed
-            if not any(ph in full_text for ph in replacements):
-                return
-
-            # Apply replacements
-            new_text = full_text
+        # STEP 1: Replace all text placeholders
+        def replace_text(element, replacements):
+            """Replace text in paragraphs and tables"""
             for placeholder, value in replacements.items():
-                new_text = new_text.replace(placeholder, value)
+                for paragraph in element.paragraphs if hasattr(element, 'paragraphs') else []:
+                    if placeholder in paragraph.text:
+                        for run in paragraph.runs:
+                            if placeholder in run.text:
+                                run.text = run.text.replace(placeholder, value)
 
-            # If no change, return
-            if new_text == full_text:
-                return
+            # Handle tables
+            for table in element.tables if hasattr(element, 'tables') else []:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            if placeholder in paragraph.text:
+                                for run in paragraph.runs:
+                                    if placeholder in run.text:
+                                        run.text = run.text.replace(placeholder, value)
 
-            # Preserve first run's formatting while updating text
-            if paragraph.runs:
-                first_run = paragraph.runs[0]
+        # Replace in document
+        for placeholder, value in replacements.items():
+            for paragraph in doc.paragraphs:
+                if placeholder in paragraph.text:
+                    for run in paragraph.runs:
+                        if placeholder in run.text:
+                            run.text = run.text.replace(placeholder, value)
 
-                # Clear all runs' text
-                for run in paragraph.runs:
-                    run.text = ''
+            # Replace in tables
+            for table in doc.tables:
+                for row in table.rows:
+                    for cell in row.cells:
+                        for paragraph in cell.paragraphs:
+                            if placeholder in paragraph.text:
+                                for run in paragraph.runs:
+                                    if placeholder in run.text:
+                                        run.text = run.text.replace(placeholder, value)
 
-                # Put new text in first run (preserves its formatting)
-                first_run.text = new_text
-            else:
-                # No runs exist, add one
-                paragraph.add_run(new_text)
+            # Replace in headers/footers
+            for section in doc.sections:
+                for paragraph in section.header.paragraphs:
+                    if placeholder in paragraph.text:
+                        for run in paragraph.runs:
+                            if placeholder in run.text:
+                                run.text = run.text.replace(placeholder, value)
 
-        # Replace in paragraphs
-        for paragraph in doc.paragraphs:
-            replace_text_preserve_format(paragraph, replacements)
+                for paragraph in section.footer.paragraphs:
+                    if placeholder in paragraph.text:
+                        for run in paragraph.runs:
+                            if placeholder in run.text:
+                                run.text = run.text.replace(placeholder, value)
 
-        # Replace in tables
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    for paragraph in cell.paragraphs:
-                        replace_text_preserve_format(paragraph, replacements)
-
-        # Replace in headers/footers
-        for section in doc.sections:
-            for paragraph in section.header.paragraphs:
-                replace_text_preserve_format(paragraph, replacements)
-            for paragraph in section.footer.paragraphs:
-                replace_text_preserve_format(paragraph, replacements)
-
-        # STEP 2: Handle [ISSUES_RAISED] - replace with actual issues
+        # STEP 2: Handle [ISSUES_RAISED] - insert issue text into existing paragraphs
+        issue_index = 0
         for paragraph in doc.paragraphs:
             if '[ISSUES_RAISED]' in paragraph.text:
-                p_element = paragraph._element
-                parent = p_element.getparent()
-                insert_index = list(parent).index(p_element)
-
-                # Remove all [ISSUES_RAISED] placeholders
-                for p in list(doc.paragraphs):
-                    if '[ISSUES_RAISED]' in p.text:
-                        p._element.getparent().remove(p._element)
-
-                # Insert new paragraph for each issue
-                original_style = paragraph.style
-                for i, issue in enumerate(issues):
-                    new_para = doc.add_paragraph(issue, style=original_style)
-                    parent.insert(insert_index + i, new_para._element)
-
-                break
+                # Replace placeholder with actual issue
+                if issue_index < len(issues):
+                    for run in paragraph.runs:
+                        if '[ISSUES_RAISED]' in run.text:
+                            run.text = run.text.replace('[ISSUES_RAISED]', issues[issue_index])
+                    issue_index += 1
+                else:
+                    # Remove extra [ISSUES_RAISED] if not enough issues
+                    for run in paragraph.runs:
+                        if '[ISSUES_RAISED]' in run.text:
+                            run.text = run.text.replace('[ISSUES_RAISED]', '')
 
         # STEP 3: Handle photos - 2 column layout
         def insert_photo(doc, placeholder, photo_files):
@@ -303,6 +190,7 @@ def generate_report():
                     parent = p_element.getparent()
                     insert_index = list(parent).index(p_element)
 
+                    # Remove placeholder paragraph
                     parent.remove(p_element)
 
                     if photo_files and any(f.filename for f in photo_files):
@@ -334,26 +222,6 @@ def generate_report():
                         parent.insert(insert_index, tbl)
                     return
 
-            # Search in tables
-            for table in doc.tables:
-                for row in table.rows:
-                    for cell in row.cells:
-                        for paragraph in cell.paragraphs:
-                            if placeholder in paragraph.text:
-                                paragraph.clear()
-                                for photo_file in photo_files:
-                                    if photo_file and photo_file.filename:
-                                        temp_path = f"/tmp/{photo_file.filename}"
-                                        photo_file.save(temp_path)
-                                        run = paragraph.add_run()
-                                        try:
-                                            run.add_picture(temp_path, width=Inches(2.5))
-                                        except:
-                                            run.text = "[Photo error]"
-                                        if os.path.exists(temp_path):
-                                            os.remove(temp_path)
-                                return
-
         # Insert photos
         photo_mapping = {
             'photo_front_building': '[FRONT_BUILDING_PHOTO]',
@@ -379,7 +247,7 @@ def generate_report():
                         if '[REMEDIAL_WORKS_DESCRIPTION]' in run.text:
                             run.text = run.text.replace('[REMEDIAL_WORKS_DESCRIPTION]', remedial_text)
 
-        # Save report
+        # Save
         filename = f"{project_number} - {site_name} - Completion Report.docx"
         path = os.path.join('reports', filename)
         os.makedirs('reports', exist_ok=True)
